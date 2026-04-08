@@ -1,6 +1,6 @@
 #![cfg_attr(feature = "engine-mock", allow(dead_code, unused_imports))]
 
-use crate::core::dsp::{istft_cac_stereo_parallel, stft_cac_stereo_centered};
+use dubsync_dsp::{istft_cac_stereo_parallel, stft_cac_stereo_centered};
 use dubsync_model::{
     error::{Result, StemError},
     model_manager::ModelHandle,

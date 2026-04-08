@@ -4,6 +4,7 @@ members = [
     "crates/dubsync",
     "crates/dubsync-stem",
     "crates/dubsync-model",
+    "crates/dubsync-dsp",
 ]
 
 [workspace.package]
@@ -36,3 +37,4 @@ num-complex = "0.4"
 rayon = "1.10"
 dubsync-stem = { path = "crates/dubsync-stem" }
 dubsync-model = { path = "crates/dubsync-model" }
+dubsync-dsp = { path = "crates/dubsync-dsp" }

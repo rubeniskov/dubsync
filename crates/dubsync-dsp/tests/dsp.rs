@@ -1,5 +1,5 @@
 use approx::assert_abs_diff_eq;
-use dubsync_stem::core::dsp::{istft_cac_stereo, stft_cac_stereo_centered, to_planar_stereo};
+use dubsync_dsp::{istft_cac_stereo, stft_cac_stereo_centered, to_planar_stereo};
 
 #[test]
 fn to_planar_stereo_mono_duplicates_channel() {

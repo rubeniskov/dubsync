@@ -681,6 +681,7 @@ dependencies = [
  "anyhow",
  "clap",
  "dirs 5.0.1",
+ "dubsync-dsp",
  "dubsync-stem",
  "ndarray 0.15.6",
  "ndarray-stats",
@@ -693,6 +694,19 @@ dependencies = [
  "serde",
  "serde_json",
  "tempfile",
+]
+
+[[package]]
+name = "dubsync-dsp"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "approx",
+ "num-complex",
+ "once_cell",
+ "rayon",
+ "rustfft",
+ "serde",
 ]
 
 [[package]]
@@ -727,6 +741,7 @@ dependencies = [
  "approx",
  "clap",
  "directories",
+ "dubsync-dsp",
  "dubsync-model",
  "hex",
  "hound",

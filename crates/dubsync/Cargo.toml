@@ -14,6 +14,7 @@ categories.workspace = true
 [dependencies]
 clap = { workspace = true }
 dubsync-stem = { workspace = true, features = ["cuda"] }
+dubsync-dsp = { workspace = true }
 anyhow = { workspace = true }
 tempfile = { workspace = true }
 ort = { workspace = true, features = ["cuda"] }

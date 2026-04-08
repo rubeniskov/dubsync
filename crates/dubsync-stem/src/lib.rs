@@ -2,13 +2,13 @@ mod types;
 
 pub mod core {
     pub mod audio;
-    pub mod dsp;
     pub mod engine;
     pub mod splitter;
     pub mod stream_splitter;
 }
 
-// Re-exports from dubsync-model
+// Re-exports from other crates
+pub use dubsync_dsp as dsp;
 pub use dubsync_model::error::{self, Result};
 pub use dubsync_model::io;
 pub use dubsync_model::model_manager;

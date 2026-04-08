@@ -12,6 +12,59 @@ The system is built upon several core components:
 4.  **Aubio Synchronization**: (In Development) Employs `aubio-rs` for onset detection and tempo analysis to precisely align the target vocals with the original source's timing.
 5.  **Checkpoint System**: A JSON-based state management system that tracks progress across processing stages, allowing for recovery if the process is interrupted.
 
+## Pipeline Overview
+
+```mermaid
+graph TD
+    %% Input Section
+    Start((START)) --> Input[Input: Video A High Quality/EN & Video B Low Quality/ES]
+    Input --> Extract[Extract Audio Streams]
+
+    %% Pre-processing
+    subgraph "Phase 1: Pre-processing"
+        Extract --> Mono[Convert both tracks to Mono]
+        Mono --> VAD[Voice Activity Detection: RMS Energy & Silences]
+    end
+
+    %% Analysis & Alignment
+    subgraph "Phase 2: Feature Extraction & Alignment"
+        VAD --> Features[Feature Extraction: FFT & MFCC]
+        Features --> CourseOffset[Calculate Global Course Offset]
+        CourseOffset --> FastDTW[Fast Dynamic Time Warping Alignment]
+        FastDTW --> Map[Generate Annotation Map / Heatmap Data]
+    end
+
+    %% Voice Processing
+    subgraph "Phase 3: AI Stem Splitting"
+        Map --> Demucs[Meta Demucs AI: Extract Dialogues Only]
+        Demucs --> ProcessES[Process ES Dialogue based on DTW Map]
+        ProcessES --> CleanEN[Remove Original EN Dialogues]
+    end
+
+    %% Integration
+    subgraph "Phase 4: Final Integration"
+        CleanEN --> AudioInject{Audio Layout?}
+        AudioInject -- "5.1 / 7.1" --> Center[Inject into Central Channel]
+        AudioInject -- "Stereo" --> Mix[Mix into Stereo Track]
+        Center --> FinalMux[Mux Audio into High Quality Video]
+        Mix --> FinalMux
+    end
+
+    %% UI Output
+    subgraph "Phase 5: GUI Visualization"
+        FinalMux --> Metadata[Generate Metadata File]
+        Metadata --> GUI[GUI: Visualize Heatmap, Annotations & Stretching]
+    end
+
+    GUI --> End((END))
+
+    %% Styling
+    style Start fill:#f9f,stroke:#333,stroke-width:2px
+    style End fill:#f9f,stroke:#333,stroke-width:2px
+    style Demucs fill:#bbf,stroke:#333,stroke-width:2px
+    style GUI fill:#dfd,stroke:#333,stroke-width:2px
+```
+
 ## Processing Procedure
 
 The conversion follows a strict 4-stage pipeline to ensure quality and consistency:

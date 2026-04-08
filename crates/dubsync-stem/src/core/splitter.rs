@@ -1,11 +1,11 @@
 use crate::{
     core::{
         audio::{read_audio, write_audio},
-        dsp::to_planar_stereo,
         engine,
     },
     types::{AudioData, SplitOptions, SplitResult},
 };
+use dubsync_dsp::to_planar_stereo;
 use dubsync_model::{
     error::Result,
     io::progress::{SplitProgress, emit_split_progress},
