@@ -1,0 +1,29 @@
+[workspace]
+name = "dubsync"
+version = "0.1.0"
+description = "Audio voice synchronization CLI with AI stem separation"
+authors = ["rubeniskov"]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[dependencies]
+rust = "1.86.*"
+ffmpeg = "7.1.*"
+pkg-config = "0.29.*"
+prek = "0.3.*"
+
+[tasks]
+# Build the project
+build = "cargo build --release"
+
+# Run the dubsync program
+run = "cargo run --release --bin dubsync --"
+
+# Run check_cuda diagnostic
+check-gpu = "cargo run --bin check_cuda"
+
+# Stress test for GPU
+stress-test = "cargo run --release --bin check_session"
+
+# Run pre-commit hooks
+pre-commit = "prek run --all-files"

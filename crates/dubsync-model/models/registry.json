@@ -1,0 +1,9 @@
+{
+  "default": "htdemucs_ort_v1",
+  "models": [
+    {
+      "name": "htdemucs_ort_v1",
+      "manifest": "https://huggingface.co/rubeniskov/htdemucs-ort/resolve/main/manifest.json"
+    }
+  ]
+}

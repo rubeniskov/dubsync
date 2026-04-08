@@ -1,0 +1,29 @@
+[package]
+name = "dubsync"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+clap = { workspace = true }
+dubsync-stem = { workspace = true, features = ["cuda"] }
+anyhow = { workspace = true }
+tempfile = { workspace = true }
+ort = { workspace = true, features = ["cuda"] }
+serde_json = { workspace = true }
+serde = { workspace = true }
+ndarray = { workspace = true }
+ndarray-stats = "0.5"
+reqwest = { workspace = true }
+dirs = "5.0"
+rubato = { workspace = true }
+rustfft = { workspace = true }
+num-complex = { workspace = true }
+rayon = { workspace = true }

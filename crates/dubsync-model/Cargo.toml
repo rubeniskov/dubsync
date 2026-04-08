@@ -1,0 +1,36 @@
+[package]
+name = "dubsync-model"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+reqwest = { workspace = true, features = ["json", "stream"] }
+sha2 = "0.10"
+hex = "0.4"
+directories = "5"
+thiserror = { workspace = true }
+ort = { workspace = true }
+ndarray = { workspace = true }
+async-trait = "0.1"
+tokio = { version = "1", features = ["full"] }
+hf-hub = { version = "0.4", features = ["tokio"] }
+models-cat = "0.1"
+futures-util = "0.3"
+
+[dev-dependencies]
+rand = "0.8"
+httpmock = "0.7"
+tempfile = { workspace = true }
+sha2 = "0.10"
+hex = "0.4"

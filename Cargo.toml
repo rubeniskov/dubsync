@@ -1,0 +1,38 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/dubsync",
+    "crates/dubsync-stem",
+    "crates/dubsync-model",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["rubeniskov <rubeniskov@gmail.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/rubeniskov/dubsync"
+homepage = "https://github.com/rubeniskov/dubsync"
+documentation = "https://github.com/rubeniskov/dubsync"
+readme = "README.md"
+keywords = ["audio", "stem", "separation", "ai", "music"]
+categories = ["multimedia::audio", "science"]
+
+[workspace.dependencies]
+# Common dependencies
+anyhow = "1.0"
+thiserror = "1.0"
+clap = { version = "4.5", features = ["derive"] }
+
+tempfile = "3.10"
+ort = { version = "2.0.0-rc.10" } # Default features will be overridden or specified in members
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+ndarray = "0.15"
+reqwest = { version = "0.12", features = ["blocking"] }
+rubato = "0.16"
+rustfft = "6.2"
+num-complex = "0.4"
+rayon = "1.10"
+dubsync-stem = { path = "crates/dubsync-stem" }
+dubsync-model = { path = "crates/dubsync-model" }
