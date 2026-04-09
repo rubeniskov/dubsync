@@ -1,10 +1,13 @@
 use rand::{RngCore, SeedableRng, rngs::StdRng};
 use sha2::{Digest, Sha256};
+use std::sync::Mutex;
 use tempfile::tempdir;
 
 use httpmock::prelude::*;
 
 use dubsync_model::ensure_model;
+
+static TEST_MUTEX: Mutex<()> = Mutex::new(());
 
 fn make_fake_model_bytes(len: usize) -> (Vec<u8>, String, u64) {
     let mut data = vec![0u8; len];
@@ -56,10 +59,11 @@ fn manifest_json(
 
 #[test]
 fn downloads_and_caches_model_then_reuses_cache() {
+    let _lock = TEST_MUTEX.lock().unwrap();
     let tmp_cache = tempdir().unwrap();
     // Use unsafe block for Edition 2024
     unsafe {
-        std::env::set_var("XDG_CACHE_HOME", tmp_cache.path());
+        std::env::set_var("DUBSYNC_MODELS_CACHE_DIR", tmp_cache.path());
     }
 
     let server = MockServer::start();
@@ -99,9 +103,10 @@ fn downloads_and_caches_model_then_reuses_cache() {
 
 #[test]
 fn checksum_mismatch_returns_error() {
+    let _lock = TEST_MUTEX.lock().unwrap();
     let tmp_cache = tempdir().unwrap();
     unsafe {
-        std::env::set_var("XDG_CACHE_HOME", tmp_cache.path());
+        std::env::set_var("DUBSYNC_MODELS_CACHE_DIR", tmp_cache.path());
     }
 
     let (model_bytes, sha_hex, size) = make_fake_model_bytes(64 * 1024);
