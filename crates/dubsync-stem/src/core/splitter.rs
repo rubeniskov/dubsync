@@ -33,7 +33,7 @@ pub fn split_file(input_path: &str, opts: SplitOptions) -> Result<SplitResult> {
     }
 
     emit_split_progress(SplitProgress::Stage("read_audio"));
-    let audio = read_audio(input_path)?;
+    let audio = read_audio(input_path, None::<fn(f32) -> bool>)?;
     let stereo = to_planar_stereo(&audio.samples, audio.channels);
     let n = stereo.len();
 

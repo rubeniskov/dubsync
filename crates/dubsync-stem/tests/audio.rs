@@ -30,7 +30,7 @@ fn write_then_read_roundtrip_mono_sine() {
     let audio = AudioData { samples: samples.clone(), sample_rate: sr, channels: 1 };
 
     write_audio(&path_str, &audio).expect("write_audio failed");
-    let decoded = read_audio(&path).expect("read_audio failed");
+    let decoded = read_audio(&path, None::<fn(f32) -> bool>).expect("read_audio failed");
 
     assert_eq!(decoded.sample_rate, sr);
     assert_eq!(decoded.channels, 1);
@@ -76,7 +76,7 @@ fn read_audio_stereo_interleaved() {
         writer.finalize().unwrap();
     }
 
-    let decoded = read_audio(&path).expect("read_audio failed");
+    let decoded = read_audio(&path, None::<fn(f32) -> bool>).expect("read_audio failed");
 
     assert_eq!(decoded.sample_rate, sr);
     assert_eq!(decoded.channels, 2);
@@ -130,7 +130,7 @@ fn write_audio_creates_parent_directories() {
 fn read_audio_nonexistent_file_returns_error() {
     let tmp = tempdir().unwrap();
     let missing = tmp.path().join("nope/does_not_exist.wav");
-    let err = read_audio(&missing).unwrap_err();
+    let err = read_audio(&missing, None::<fn(f32) -> bool>).unwrap_err();
     let msg = format!("{:#}", err).to_lowercase();
     assert!(
         msg.contains("failed to open audio file") || msg.contains("no such file"),

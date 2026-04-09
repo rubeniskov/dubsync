@@ -1,11 +1,5 @@
+pub use dubsync_core::AudioData;
 use serde::{Deserialize, Serialize};
-
-#[derive(Clone, Debug)]
-pub struct AudioData {
-    pub samples: Vec<f32>,
-    pub sample_rate: u32,
-    pub channels: u16,
-}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SplitOptions {

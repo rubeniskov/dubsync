@@ -203,11 +203,15 @@ fn main() -> Result<()> {
 
     if !checkpoint.sync_completed {
         println!("[Step 3/4] Two-Stage Macro/Micro Alignment Engine...");
-        let main_v = read_audio(checkpoint.main_vocals_path.as_ref().unwrap())?;
-        let target_v = read_audio(checkpoint.target_vocals_path.as_ref().unwrap())?;
+        let main_v =
+            read_audio(checkpoint.main_vocals_path.as_ref().unwrap(), None::<fn(f32) -> bool>)?;
+        let target_v =
+            read_audio(checkpoint.target_vocals_path.as_ref().unwrap(), None::<fn(f32) -> bool>)?;
 
-        let main_mono_audio = read_audio(checkpoint.main_mono_path.as_ref().unwrap())?;
-        let target_mono_audio = read_audio(checkpoint.target_mono_path.as_ref().unwrap())?;
+        let main_mono_audio =
+            read_audio(checkpoint.main_mono_path.as_ref().unwrap(), None::<fn(f32) -> bool>)?;
+        let target_mono_audio =
+            read_audio(checkpoint.target_mono_path.as_ref().unwrap(), None::<fn(f32) -> bool>)?;
 
         let frame_rate = 100;
         let hop_size = main_v.sample_rate as usize / frame_rate;
@@ -313,7 +317,7 @@ fn clean_english_track(
     work_dir: &Path,
     _keep_all_stems: bool,
 ) -> Result<()> {
-    let audio = read_audio(input.to_str().unwrap())?;
+    let audio = read_audio(input.to_str().unwrap(), None::<fn(f32) -> bool>)?;
     let channels = audio.channels as usize;
     let mut cleaned_channels: Vec<Vec<f32>> =
         vec![vec![0.0; audio.samples.len() / channels]; channels];
@@ -329,7 +333,7 @@ fn clean_english_track(
             ])?;
             let cleaned_path = work_dir.join(format!("temp_pair_{}_cleaned.wav", i));
             separate_track(&mono_path, &cleaned_path, &format!("Cleaning Ch {}", i), false, None)?;
-            let cleaned = read_audio(cleaned_path.to_str().unwrap())?;
+            let cleaned = read_audio(cleaned_path.to_str().unwrap(), None::<fn(f32) -> bool>)?;
             for j in 0..cleaned_channels[i].len() {
                 cleaned_channels[i][j] = cleaned.samples[j * 2];
             }
@@ -353,7 +357,7 @@ fn clean_english_track(
             false,
             None,
         )?;
-        let cleaned = read_audio(cleaned_path.to_str().unwrap())?;
+        let cleaned = read_audio(cleaned_path.to_str().unwrap(), None::<fn(f32) -> bool>)?;
         for j in 0..cleaned_channels[i].len() {
             cleaned_channels[i][j] = cleaned.samples[j * 2] * 0.95;
             cleaned_channels[i + 1][j] = cleaned.samples[j * 2 + 1] * 0.95;
@@ -386,7 +390,7 @@ fn separate_track(
     save_stems_to: Option<&Path>,
 ) -> Result<()> {
     let mut splitter = StreamSplitter::new(SplitOptions::default())?;
-    let audio = read_audio(input_path.to_str().unwrap())?;
+    let audio = read_audio(input_path.to_str().unwrap(), None::<fn(f32) -> bool>)?;
     let stereo = to_planar_stereo(&audio.samples, audio.channels);
     let left: Vec<f32> = stereo.iter().map(|s| s[0]).collect();
     let right: Vec<f32> = stereo.iter().map(|s| s[1]).collect();

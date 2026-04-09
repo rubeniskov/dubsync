@@ -1,0 +1,23 @@
+[package]
+name = "dubsync-gui"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+iced = { version = "0.13", features = ["canvas", "tokio", "image", "svg", "wgpu", "advanced"] }
+dubsync-dsp = { workspace = true }
+dubsync-stem = { workspace = true }
+dubsync-core = { workspace = true }
+anyhow = { workspace = true }
+tokio = { version = "1", features = ["full"] }
+rfd = "0.14"
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+clap = { workspace = true }
+image = "0.24"
+lucide-icons = { workspace = true }
+rodio = "0.19"
+futures = "0.3"
+async-stream = "0.3"

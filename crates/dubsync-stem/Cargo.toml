@@ -26,7 +26,8 @@ hound = "3"
 rubato = { workspace = true }
 ndarray = { workspace = true }
 anyhow = { workspace = true }
-symphonia = { version = "0.5", features = ["mp3", "wav"] }
+dubsync-core = { workspace = true }
+symphonia = { workspace = true }
 tempfile = { workspace = true }
 ort = { workspace = true, features = ["download-binaries"] }
 serde = { workspace = true }

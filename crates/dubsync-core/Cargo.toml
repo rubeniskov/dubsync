@@ -1,0 +1,18 @@
+[package]
+name = "dubsync-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+symphonia = { workspace = true }
+anyhow = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+dubsync-dsp = { workspace = true }
+blake3 = { workspace = true }
+memmap2 = { workspace = true }
+rayon = { workspace = true }
+directories = { workspace = true }
+hound = "3"
+tokio = { version = "1", features = ["full"] }

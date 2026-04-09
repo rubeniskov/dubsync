@@ -57,13 +57,13 @@ fn manifest_json(
 #[test]
 fn downloads_and_caches_model_then_reuses_cache() {
     let tmp_cache = tempdir().unwrap();
+    // Use unsafe block for Edition 2024
     unsafe {
         std::env::set_var("XDG_CACHE_HOME", tmp_cache.path());
     }
 
-    let (model_bytes, sha_hex, size) = make_fake_model_bytes(256 * 1024); // 256 KiB
-
     let server = MockServer::start();
+    let (model_bytes, sha_hex, size) = make_fake_model_bytes(64 * 1024);
 
     let model_mock = server.mock(|when, then| {
         when.method(GET).path("/mdx_4stem_v1.onnx");
@@ -110,12 +110,9 @@ fn checksum_mismatch_returns_error() {
     bad_sha.replace_range(0..1, if first == "a" { "b" } else { "a" });
 
     let server = MockServer::start();
-
     let _model_mock = server.mock(|when, then| {
         when.method(GET).path("/bad.onnx");
-        then.status(200)
-            .header("Content-Length", size.to_string().as_str())
-            .body(model_bytes.clone());
+        then.status(200).body(model_bytes.clone());
     });
 
     let model_name = "bad_model";
