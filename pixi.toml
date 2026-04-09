@@ -7,10 +7,10 @@ channels = ["conda-forge"]
 platforms = ["linux-64"]
 
 [dependencies]
-rust = "1.86.*"
 ffmpeg = "7.1.*"
 pkg-config = "0.29.*"
 prek = "0.3.*"
+alsa-lib = "1.2.*"
 
 [tasks]
 # Build the project
