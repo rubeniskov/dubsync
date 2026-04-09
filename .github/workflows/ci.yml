@@ -20,23 +20,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Rust (stable)
-        uses: dtolnay/rust-toolchain@stable
+      - name: Install Pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
         with:
-          components: rustfmt, clippy
-
-      - name: Install Rust (nightly)
-        uses: dtolnay/rust-toolchain@nightly
-        with:
-          components: rustfmt
-
-      - name: Cache cargo builds
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: |
-            .
+          activate: true
+          cache: true
+          frozen: true
 
       - name: Run prek checks
-        uses: j178/prek-action@v2
-        with:
-          extra_args: --all-files
+        run: pixi run pre-commit
