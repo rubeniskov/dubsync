@@ -8,7 +8,9 @@ pub fn run(path: PathBuf) -> anyhow::Result<()> {
     println!("--- Metadata ---");
     println!("Duration:    {}", stats.format_duration());
     println!("Sample Rate: {} Hz", stats.sample_rate);
-    println!("Bit Depth:   {} bit", stats.bit_depth);
+    if let Some(bit_depth) = stats.bit_depth {
+        println!("Bit Depth:   {} bit", bit_depth);
+    }
     println!("Channels:    {}", stats.channels);
     println!("Codec:       {}", stats.codec);
     Ok(())

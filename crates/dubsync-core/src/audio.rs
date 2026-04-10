@@ -146,7 +146,7 @@ impl ChannelLayout {
 pub struct AudioStats {
     pub sample_rate: u32,
     pub channels: ChannelLayout,
-    pub bit_depth: u32,
+    pub bit_depth: Option<u32>,
     pub duration_secs: f64,
     pub codec: Codec,
 }
@@ -154,12 +154,14 @@ pub struct AudioStats {
 impl AudioStats {
     pub fn extract<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
-        if let Ok(stats) = Self::extract_native(path) {
-            if stats.sample_rate > 0 && stats.codec != Codec::Unknown {
-                return Ok(stats);
-            }
+
+        // 1. Always try FFmpeg first as it is more robust for containers (MKV, etc.)
+        if let Ok(f) = Self::extract_ffmpeg(path) {
+            return Ok(f);
         }
-        Self::extract_ffmpeg(path)
+
+        // 2. Fallback to native Symphonia
+        Self::extract_native(path)
     }
 
     fn extract_native<P: AsRef<Path>>(path: P) -> Result<Self> {
@@ -192,7 +194,7 @@ impl AudioStats {
             .map(|cl| cl.into_channels().count() as u16)
             .or_else(|| params.channels.map(|c| c.count() as u16))
             .unwrap_or(0);
-        let bit_depth = params.bits_per_sample.unwrap_or(0);
+        let bit_depth = params.bits_per_sample.filter(|&b| b > 0).map(|b| b as u32);
         let duration_secs = params
             .n_frames
             .and_then(|n| if sample_rate > 0 { Some(n as f64 / sample_rate as f64) } else { None })
@@ -201,7 +203,7 @@ impl AudioStats {
         Ok(Self {
             sample_rate,
             channels: ChannelLayout::from_channels(channels_raw),
-            bit_depth: bit_depth as u32,
+            bit_depth,
             duration_secs,
             codec: Codec::from(params.codec),
         })
@@ -236,14 +238,15 @@ impl AudioStats {
             .as_str()
             .and_then(|s| s.parse::<u16>().ok())
             .or_else(|| stream["bits_per_raw_sample"].as_str().and_then(|s| s.parse::<u16>().ok()))
-            .unwrap_or(0);
+            .filter(|&b| b > 0)
+            .map(|b| b as u32);
         let duration_secs =
             info["format"]["duration"].as_str().and_then(|s| s.parse::<f64>().ok()).unwrap_or(0.0);
         let codec_name = stream["codec_name"].as_str().unwrap_or("unknown");
         Ok(Self {
             sample_rate,
             channels: ChannelLayout::from_channels(channels_raw),
-            bit_depth: bit_depth as u32,
+            bit_depth,
             duration_secs,
             codec: match codec_name {
                 "mp3" => Codec::MP3,

@@ -1688,11 +1688,10 @@ impl DubSyncGui {
     }
 
     fn format_sub_label(stats: &AudioStats) -> String {
-        let bit_depth = if stats.bit_depth > 0 {
-            format!("{} bit . ", stats.bit_depth)
-        } else {
-            "".to_string()
-        };
+        let bit_depth = stats
+            .bit_depth
+            .map(|b| format!("{} bit . ", b))
+            .unwrap_or_default();
         let channel_label = match stats.channels {
             ChannelLayout::Mono => "Mono",
             ChannelLayout::Stereo => "Stereo",

@@ -849,26 +849,26 @@ impl Program<Message> for Navigator {
             let vx = NAV_PADDING + self.offset * usable_width;
 
             frame.fill(
-                &Path::rectangle(Point::new(vx, 0.0), Size::new(vw, bounds.height)),
+                &Path::rectangle(Point::new(vx, 1.0), Size::new(vw, bounds.height - 2.0)),
                 canvas::Fill::from(Color::from_rgba8(0, 200, 200, 0.1)),
             );
             frame.stroke(
-                &Path::rectangle(Point::new(vx, 0.0), Size::new(vw, bounds.height)),
+                &Path::rectangle(Point::new(vx, 1.0), Size::new(vw, bounds.height - 2.0)),
                 canvas::Stroke::default().with_color(Color::from_rgb8(0, 200, 200)).with_width(1.0),
             );
 
             // Handles completely outside the edges
             frame.fill(
                 &Path::rectangle(
-                    Point::new(vx - NAV_HANDLE_WIDTH, -1.0),
-                    Size::new(NAV_HANDLE_WIDTH, bounds.height),
+                    Point::new(vx - NAV_HANDLE_WIDTH, 1.0),
+                    Size::new(NAV_HANDLE_WIDTH, bounds.height - 2.0),
                 ),
                 canvas::Fill::from(Color::from_rgb8(0, 200, 200)),
             );
             frame.fill(
                 &Path::rectangle(
-                    Point::new(vx + vw, -1.0),
-                    Size::new(NAV_HANDLE_WIDTH, bounds.height),
+                    Point::new(vx + vw, 1.0),
+                    Size::new(NAV_HANDLE_WIDTH, bounds.height - 2.0),
                 ),
                 canvas::Fill::from(Color::from_rgb8(0, 200, 200)),
             );
