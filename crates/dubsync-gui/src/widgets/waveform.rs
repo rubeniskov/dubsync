@@ -69,12 +69,14 @@ impl TimelineRuleTick {
 }
 
 /// A modular component representing a single audio track waveform.
+#[derive(Default)]
 pub struct WaveformTrack {
     pub cache: Option<WaveformCache>,
     pub color: Color,
     pub is_reference: bool,
     pub label: String,
     pub sub_label: String,
+    pub duration: f32,
 }
 
 impl WaveformTrack {
@@ -85,26 +87,34 @@ impl WaveformTrack {
         zoom: f32,
         offset: f32,
         mode: TimelineMode,
+        total_duration: f32,
     ) {
         let Some(cache) = &self.cache else { return };
         if cache.peaks.is_empty() {
             return;
         };
 
-        let mid_y = bounds.y + (bounds.height / 2.0);
+        // Scale bounds based on track duration
+        let scale_factor = if total_duration > 0.0 {
+            self.duration / total_duration
+        } else {
+            1.0
+        };
+        let track_bounds = Rectangle {
+            width: bounds.width * scale_factor,
+            ..bounds
+        };
+
+        let mid_y = track_bounds.y + (track_bounds.height / 2.0);
         let bar_width = 3.0f32;
         let gap = 2.0f32;
         let step = bar_width + gap;
-
-        // Use a few extra bars to cover sub-pixel sliding at edges
-        let num_bars = (bounds.width / step).floor() as usize + 2;
+        let num_bars = (track_bounds.width / step).floor() as usize + 2;
 
         let total_peaks = cache.peaks.len() as f32;
         let visible_peaks = total_peaks / zoom;
-        let peaks_per_bar = visible_peaks / (bounds.width / step);
+        let peaks_per_bar = visible_peaks / (track_bounds.width / step);
 
-        // JITTER-FREE SAMPLING:
-        // Anchor bars to the data's grid, then use a fractional visual offset
         let total_offset_in_bars = offset * total_peaks / peaks_per_bar;
         let first_bar_data_idx = total_offset_in_bars.floor();
         let sub_bar_px_offset = (total_offset_in_bars - first_bar_data_idx) * step;
@@ -116,53 +126,37 @@ impl WaveformTrack {
                 let data_idx = first_bar_data_idx + i as f32;
                 let current_bar_start = data_idx * peaks_per_bar;
                 let start_idx = current_bar_start.floor() as usize;
-                let end_idx = (current_bar_start + peaks_per_bar).ceil() as usize;
 
                 if start_idx >= cache.peaks.len() {
                     break;
                 }
 
-                let mut min_val = 0.0f32;
-                let mut max_val = 0.0f32;
+                let (_, p_max) = cache.peaks[start_idx.min(cache.peaks.len() - 1)];
+                let bar_val = p_max.abs();
+                let bar_height = bar_val * (track_bounds.height / 2.0);
 
-                if start_idx == end_idx || peaks_per_bar < 1.0 {
-                    let (_, p_max) = cache.peaks[start_idx.min(cache.peaks.len() - 1)];
-                    max_val = p_max;
-                    min_val = -p_max; // Assume symmetry for upscaling
-                } else {
-                    for j in start_idx..end_idx.min(cache.peaks.len()) {
-                        let (p_min, p_max) = cache.peaks[j];
-                        min_val = min_val.min(p_min);
-                        max_val = max_val.max(p_max);
-                    }
+                let x = track_bounds.x + (i as f32 * step) - sub_bar_px_offset;
+
+                if x < track_bounds.x || x > track_bounds.x + track_bounds.width {
+                    continue;
                 }
 
-                // Smooth horizontal position including fractional shift
-                let x = (i as f32 * step) - sub_bar_px_offset + (bar_width / 2.0);
-
-                let (y_start, y_end) = if is_mirrored {
-                    if self.is_reference {
-                        let base_y = bounds.y + bounds.height;
-                        (base_y, base_y - max_val.abs() * bounds.height)
-                    } else {
-                        let base_y = bounds.y;
-                        (base_y, base_y + max_val.abs() * bounds.height)
-                    }
+                if is_mirrored {
+                    builder.move_to(Point::new(x, mid_y - bar_height));
+                    builder.line_to(Point::new(x, mid_y + bar_height));
+                } else if self.is_reference {
+                    builder.move_to(Point::new(x, mid_y));
+                    builder.line_to(Point::new(x, mid_y - bar_height * 2.0));
                 } else {
-                    (
-                        mid_y + (min_val * (bounds.height / 2.0)),
-                        mid_y + (max_val * (bounds.height / 2.0)),
-                    )
-                };
-
-                builder.move_to(Point::new(x, y_start));
-                builder.line_to(Point::new(x, y_end));
+                    builder.move_to(Point::new(x, mid_y));
+                    builder.line_to(Point::new(x, mid_y + bar_height * 2.0));
+                }
             }
         });
-
         frame.stroke(&path, canvas::Stroke::default().with_color(self.color).with_width(bar_width));
     }
 }
+
 
 /// The main synchronized viewport containing tracks and the central ruler.
 pub struct TimelineViewport {
@@ -188,6 +182,7 @@ impl TimelineViewport {
                 is_reference: true,
                 label: "Reference Track".to_string(),
                 sub_label: "".to_string(),
+                duration: 0.0,
             },
             target: WaveformTrack {
                 cache: None,
@@ -195,6 +190,7 @@ impl TimelineViewport {
                 is_reference: false,
                 label: "Target Track".to_string(),
                 sub_label: "".to_string(),
+                duration: 0.0,
             },
             cache: Cache::default(),
             cursor_cache: Cache::default(),
@@ -523,6 +519,7 @@ impl Program<Message> for TimelineViewport {
                 self.zoom,
                 self.offset,
                 self.mode,
+                self.total_duration,
             );
             self.target.draw(
                 frame,
@@ -535,6 +532,7 @@ impl Program<Message> for TimelineViewport {
                 self.zoom,
                 self.offset,
                 self.mode,
+                self.total_duration,
             );
         });
 
@@ -575,16 +573,18 @@ impl Program<Message> for TimelineViewport {
         vec![geom, cursor_geom]
     }
 }
-
 pub struct Navigator {
     pub reference: Option<WaveformCache>,
     pub target: Option<WaveformCache>,
+    pub reference_duration: f32,
+    pub target_duration: f32,
     pub reference_color: Color,
     pub target_color: Color,
     pub cache: Cache,
     pub cursor_cache: Cache,
     pub zoom: f32,
     pub offset: f32,
+    pub offset_ms: i64,
     pub playback_pos: f32,
     pub mode: TimelineMode,
     pub total_duration: f32,
@@ -592,17 +592,21 @@ pub struct Navigator {
     pub is_loading: bool,
 }
 
+
 impl Navigator {
     pub fn new() -> Self {
         Self {
             reference: None,
             target: None,
+            reference_duration: 0.0,
+            target_duration: 0.0,
             reference_color: Color::from_rgba8(0, 200, 200, 0.3),
             target_color: Color::from_rgba8(200, 200, 200, 0.3),
             cache: Cache::default(),
             cursor_cache: Cache::default(),
             zoom: 1.0,
             offset: 0.0,
+            offset_ms: 0,
             mode: TimelineMode::Mirrored,
             playback_pos: 0.0,
             total_duration: 0.0,
@@ -622,14 +626,24 @@ impl Navigator {
         y_max_norm: f32,
         is_reference: bool,
         x_offset: f32,
+        track_duration: f32,
+        total_duration: f32,
     ) {
         if cache.peaks.is_empty() {
             return;
         }
         let draw_height = size.height * (y_max_norm - y_min_norm);
         let mid_y = size.height * y_min_norm + (draw_height / 2.0);
+        
+        // Scale the track width based on its duration relative to total project duration
+        let track_width = if total_duration > 0.0 {
+            (track_duration / total_duration) * size.width
+        } else {
+            size.width
+        };
+
         let step = 3.0; // Fixed step for nav
-        let num_bars = (size.width / step).floor() as usize;
+        let num_bars = (track_width / step).floor() as usize;
         let peaks_per_bar = cache.peaks.len() as f32 / num_bars as f32;
 
         let path = Path::new(|builder| {
@@ -638,7 +652,6 @@ impl Navigator {
                 let (_, p_max) = cache.peaks[start_idx.min(cache.peaks.len() - 1)];
                 let x = x_offset + i as f32 * step + 1.0;
 
-                // FORCE Mirrored mode for Navigator
                 let (y_start, y_end) = if is_reference {
                     (mid_y, mid_y - p_max.abs() * (draw_height / 2.0))
                 } else {
@@ -830,6 +843,8 @@ impl Program<Message> for Navigator {
                     1.0,
                     true,
                     NAV_PADDING,
+                    self.reference_duration,
+                    self.total_duration,
                 );
             }
             if let Some(c) = &self.target {
@@ -842,6 +857,8 @@ impl Program<Message> for Navigator {
                     1.0,
                     false,
                     NAV_PADDING,
+                    self.target_duration,
+                    self.total_duration,
                 );
             }
 

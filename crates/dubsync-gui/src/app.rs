@@ -364,6 +364,8 @@ impl DubSyncGui {
                     .unwrap_or("Reference");
                 self.timeline_viewport.reference.label = filename.to_string();
                 self.timeline_viewport.reference.sub_label = Self::format_sub_label(&stats);
+                self.timeline_viewport.reference.duration = stats.duration_secs as f32;
+                self.navigator.reference_duration = stats.duration_secs as f32;
                 self.reference_stats = Some(stats);
             }
             Message::TargetMeta(stats) => {
@@ -376,6 +378,8 @@ impl DubSyncGui {
                     .unwrap_or("Target");
                 self.timeline_viewport.target.label = filename.to_string();
                 self.timeline_viewport.target.sub_label = Self::format_sub_label(&stats);
+                self.timeline_viewport.target.duration = stats.duration_secs as f32;
+                self.navigator.target_duration = stats.duration_secs as f32;
                 self.target_stats = Some(stats);
             }
             Message::ReferenceLoadingProgress { name, step, total, percent } => {
