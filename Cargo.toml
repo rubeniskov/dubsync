@@ -2,6 +2,7 @@
 resolver = "3"
 members = [
     "crates/dubsync",
+    "crates/dubsync-cli",
     "crates/dubsync-stem",
     "crates/dubsync-model",
     "crates/dubsync-dsp",

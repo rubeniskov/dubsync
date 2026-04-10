@@ -1427,6 +1427,7 @@ dependencies = [
  "anyhow",
  "clap",
  "dirs 5.0.1",
+ "dubsync-core",
  "dubsync-dsp",
  "dubsync-stem",
  "ndarray 0.15.6",
@@ -1443,6 +1444,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "dubsync-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "directories",
+ "dubsync-core",
+ "indicatif",
+ "ort",
+]
+
+[[package]]
 name = "dubsync-core"
 version = "0.1.0"
 dependencies = [
@@ -1454,6 +1467,7 @@ dependencies = [
  "memmap2",
  "rayon",
  "serde",
+ "serde_json",
  "symphonia",
  "tokio",
 ]

@@ -4,7 +4,7 @@ use crate::tasks::{load_project_file, perform_analysis, save_project_file};
 use crate::theme::{GEIST_MONO, LUCIDE};
 use crate::types::{DubSyncProjectState, MoveMode, PlaybackMode, PlaybackSpeed, TimelineMode};
 use crate::widgets::waveform::{Navigator, TimelineViewport};
-use dubsync_core::{AudioData, AudioStats, Codec, Project, ResourceManager};
+use dubsync_core::{AudioData, AudioStats, ChannelLayout, Codec, Project, ResourceManager};
 use iced::widget::{
     Canvas, button, column, container, horizontal_space, progress_bar, row, slider, stack, text,
 };
@@ -1420,7 +1420,11 @@ impl DubSyncGui {
 
         let content: Element<'a, Message> = if let Some(p) = path {
             let filename = p.file_stem().and_then(|s| s.to_str()).unwrap_or("Unknown");
-            let stats_text = if let Some(s) = stats {
+            let stats_text = if let Some(err) = &loading.error_message {
+                format!("Error: {}", err)
+            } else if loading.is_active {
+                loading.step_name.clone()
+            } else if let Some(s) = stats {
                 Self::format_sub_label(s)
             } else {
                 "Loading...".to_string()
@@ -1442,7 +1446,7 @@ impl DubSyncGui {
                                 .size(14)
                                 .font(bold_font)
                                 .color(Color::WHITE)
-                                .width(Length::Shrink)
+                                .width(Length::Fill)
                         ],
                         button(text(char::from(Icon::X).to_string()).font(LUCIDE).size(12))
                             .on_press(on_unload.clone())
@@ -1488,7 +1492,7 @@ impl DubSyncGui {
             let info_layer = container(card)
                 .width(Length::Fill)
                 .height(Length::Fill)
-                .padding(20)
+                .padding(10)
                 .align_x(iced::alignment::Horizontal::Left)
                 .align_y(alignment);
 
@@ -1545,53 +1549,34 @@ impl DubSyncGui {
                         if is_target { Color::from_rgb8(0, 255, 255) } else { Color::WHITE };
 
                     let progress_layer = container(
-                        container(
-                            column![
-                                stack![
-                                    container(
-                                        text(step_text.clone())
-                                            .size(12)
-                                            .font(bold_font)
-                                            .color(Color::from_rgba8(0, 0, 0, 0.8))
-                                            .width(Length::Shrink)
-                                    )
-                                    .padding([1, 1]),
-                                    text(step_text)
+                        column![
+                            stack![
+                                container(
+                                    text(step_text.clone())
                                         .size(12)
                                         .font(bold_font)
-                                        .color(progress_color)
+                                        .color(Color::from_rgba8(0, 0, 0, 0.8))
                                         .width(Length::Shrink)
-                                ],
-                                progress_bar(0.0..=1.0, overall_progress)
-                                    .height(Length::Fixed(10.0))
-                                    .style(move |_| progress_bar::Style {
-                                        background: iced::Background::Color(Color::from_rgba8(
-                                            20, 20, 20, 0.8
-                                        )),
-                                        bar: iced::Background::Color(progress_color),
-                                        border: Border { radius: 5.0.into(), ..Default::default() },
-                                    })
-                            ]
-                            .spacing(12)
-                            .align_x(Alignment::Center),
-                        )
-                        .width(Length::Fill)
-                        .padding(Padding { top: 25.0, bottom: 25.0, left: 20.0, right: 20.0 })
-                        .style(move |_| container::Style {
-                            background: Some(iced::Background::Color(Color::from_rgba8(
-                                30, 30, 30, 0.5,
-                            ))),
-                            border: Border {
-                                color: if is_target {
-                                    Color::from_rgba8(0, 200, 200, 0.3)
-                                } else {
-                                    Color::from_rgba8(150, 150, 150, 0.3)
-                                },
-                                width: 1.0,
-                                radius: 12.0.into(),
-                            },
-                            ..Default::default()
-                        }),
+                                )
+                                .padding([1, 1]),
+                                text(step_text)
+                                    .size(12)
+                                    .font(bold_font)
+                                    .color(progress_color)
+                                    .width(Length::Shrink)
+                            ],
+                            progress_bar(0.0..=1.0, overall_progress)
+                                .height(Length::Fixed(10.0))
+                                .style(move |_| progress_bar::Style {
+                                    background: iced::Background::Color(Color::from_rgba8(
+                                        20, 20, 20, 0.8
+                                    )),
+                                    bar: iced::Background::Color(progress_color),
+                                    border: Border { radius: 5.0.into(), ..Default::default() },
+                                })
+                        ]
+                        .spacing(12)
+                        .align_x(Alignment::Center),
                     )
                     .width(Length::Fill)
                     .height(Length::Fill)
@@ -1704,16 +1689,23 @@ impl DubSyncGui {
 
     fn format_sub_label(stats: &AudioStats) -> String {
         let bit_depth = if stats.bit_depth > 0 {
-            format!("{} bit · ", stats.bit_depth)
+            format!("{} bit . ", stats.bit_depth)
         } else {
             "".to_string()
         };
+        let channel_label = match stats.channels {
+            ChannelLayout::Mono => "Mono",
+            ChannelLayout::Stereo => "Stereo",
+            ChannelLayout::Surround5_1 => "5.1",
+            ChannelLayout::Surround7_1 => "7.1",
+            ChannelLayout::Other(_) => "Multichannel",
+        };
         format!(
-            "{} · {}Hz · {}{} · {}",
+            "{} . {}Hz . {}{} . {}",
             stats.format_duration(),
             stats.sample_rate,
             bit_depth,
-            if stats.channels == 2 { "Stereo" } else { "Mono" },
+            channel_label,
             stats.codec
         )
     }

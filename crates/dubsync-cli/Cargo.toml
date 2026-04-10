@@ -1,0 +1,15 @@
+[package]
+name = "dubsync-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+clap = { workspace = true }
+dubsync-core = { workspace = true }
+anyhow = { workspace = true }
+ort = { workspace = true, features = ["cuda"] }
+directories = { workspace = true }
+indicatif = "0.17"

@@ -9,7 +9,10 @@ use std::path::PathBuf;
 fn main() -> anyhow::Result<()> {
     init().with_name("diagnostic").commit()?;
 
-    let cache_dir = dirs::cache_dir().unwrap_or_else(|| PathBuf::from(".cache")).join("dubsync");
+    let cache_dir = directories::ProjectDirs::from("dev", "DubSync", "dubsync")
+        .map(|pd| pd.cache_dir().to_path_buf())
+        .unwrap_or_else(|| PathBuf::from(".cache"))
+        .join("dubsync");
     let model_path = cache_dir.join("silero_vad.onnx");
 
     if !model_path.exists() {

@@ -46,22 +46,32 @@ pub fn load_audio_file(
     path: PathBuf,
     cancel_token: std::sync::Arc<std::sync::atomic::AtomicBool>,
 ) -> impl Stream<Item = LoadingStep> {
+    // Probe before starting the stream to avoid unnecessary progress UI
+    let stats = AudioStats::extract(&path);
+
     async_stream::stream! {
+        let stats = match stats {
+            Ok(s) => {
+                yield LoadingStep::Meta(s.clone());
+                s
+            }
+            Err(e) => {
+                yield LoadingStep::Result(Err(e));
+                return;
+            }
+        };
+
         let (tx, mut rx) = mpsc::channel(100);
 
         tokio::task::spawn_blocking(move || {
             let tx_inner = tx.clone();
 
             let result = (|| -> anyhow::Result<(AudioData, WaveformCache, AudioStats)> {
-                // 1. Immediate Metadata extraction (from original)
-                let stats = AudioStats::extract(&path)?;
-                let _ = tx_inner.blocking_send(LoadingStep::Meta(stats.clone()));
-
                 let needs_ffmpeg = !stats.codec.is_natively_supported();
                 let total_steps = if needs_ffmpeg { 4 } else { 3 };
                 let mut current_step = 1;
 
-                // 2. Optional Extraction (Step 1/4 if video)
+                // 2. Optional Extraction
                 let source_path = if needs_ffmpeg {
                     if cancel_token.load(std::sync::atomic::Ordering::Relaxed) { return Err(anyhow::anyhow!("Cancelled")); }
                     let tx_extract = tx_inner.clone();
@@ -86,14 +96,15 @@ pub fn load_audio_file(
 
                 if cancel_token.load(std::sync::atomic::Ordering::Relaxed) { return Err(anyhow::anyhow!("Cancelled")); }
 
-                // 3. Hash computation on the smallest valid input (Step 2/4 or 1/3)
+                // 3. Hash computation
                 let tx_hash = tx_inner.clone();
                 let token_hash = cancel_token.clone();
+                let step_idx = current_step;
                 let hash = ResourceManager::compute_hash(&source_path, Some(|p| {
                     if token_hash.load(std::sync::atomic::Ordering::Relaxed) { return false; }
                     let _ = tx_hash.blocking_send(LoadingStep::Progress {
                         name: "Hashing".to_string(),
-                        step: current_step,
+                        step: step_idx,
                         total: total_steps,
                         percent: p
                     });
@@ -101,7 +112,7 @@ pub fn load_audio_file(
                 }))?;
                 current_step += 1;
 
-                // 4. Prepare mono audio (Step 3/4 or 2/3 - includes decoding)
+                // 4. Decode
                 let tx_progress = tx_inner.clone();
                 let step_idx = current_step;
                 let step_name = if needs_ffmpeg { "Decoding".to_string() } else { "Decoding/Mono".to_string() };
@@ -120,7 +131,7 @@ pub fn load_audio_file(
 
                 if cancel_token.load(std::sync::atomic::Ordering::Relaxed) { return Err(anyhow::anyhow!("Cancelled")); }
 
-                // 5. Build waveform cache (Step 4/4 or 3/3)
+                // 5. Waveform
                 let _ = tx_inner.blocking_send(LoadingStep::Progress {
                     name: "Generating Waveform".to_string(),
                     step: current_step,
